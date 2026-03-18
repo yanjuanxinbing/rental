@@ -20,7 +20,6 @@ python app.py   # 首次运行会自动 db.create_all()
 ```
 rental/
 ├── app.py              # 入口，create_app 工厂函数
-├── config.py           # 配置（密钥、数据库路径）
 ├── extensions.py       # db / login_manager / migrate
 ├── requirements.txt
 ├── models/
