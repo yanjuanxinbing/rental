@@ -48,7 +48,7 @@
       <div class="col-12 col-md-6 col-xl-4">
         <a href="{{ url_for('house.detail', house_id=house.id) }}" class="card house-card text-decoration-none text-dark h-100">
           <img src="{{ url_for('static', filename='img/uploads/' + house.cover_img) }}"
-               onerror="this.src='https://placehold.co/400x180?text=暂无图片'"
+               onerror="this.src='https://placehold.co/400x200?text=暂无图片'"
                alt="{{ house.title }}">
           <div class="card-body">
             <h6 class="text-truncate mb-1">{{ house.title }}</h6>

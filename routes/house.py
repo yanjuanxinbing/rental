@@ -1,10 +1,40 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+import os
+import uuid
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
+from PIL import Image
 from extensions import db
 from models.house import House
 from models.order import Order
 
 house_bp = Blueprint('house', __name__)
+
+TARGET_W, TARGET_H = 800, 400   # 目标分辨率
+FILL_COLOR = (245, 245, 245)    # 填充色：浅灰
+
+
+def process_cover(file) -> str:
+    """letterbox 处理上传图片，返回保存后的文件名"""
+    img = Image.open(file).convert('RGB')
+    src_w, src_h = img.size
+
+    # 等比缩放，使图片完整放入目标框
+    scale = min(TARGET_W / src_w, TARGET_H / src_h)
+    new_w = int(src_w * scale)
+    new_h = int(src_h * scale)
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+
+    # 创建目标画布并居中粘贴
+    canvas = Image.new('RGB', (TARGET_W, TARGET_H), FILL_COLOR)
+    offset_x = (TARGET_W - new_w) // 2
+    offset_y = (TARGET_H - new_h) // 2
+    canvas.paste(img, (offset_x, offset_y))
+
+    filename = f"{uuid.uuid4().hex}.jpg"
+    upload_dir = os.path.join(current_app.root_path, 'static/img/uploads')
+    os.makedirs(upload_dir, exist_ok=True)
+    canvas.save(os.path.join(upload_dir, filename), 'JPEG', quality=85)
+    return filename
 
 
 @house_bp.route('/list')
@@ -42,6 +72,14 @@ def publish():
         flash('只有房东才能发布房源', 'warning')
         return redirect(url_for('index'))
     if request.method == 'POST':
+        cover = 'default_house.jpg'
+        file = request.files.get('cover_img')
+        if file and file.filename:
+            try:
+                cover = process_cover(file)
+            except Exception:
+                flash('图片处理失败，已使用默认封面', 'warning')
+
         house = House(
             title=request.form.get('title'),
             description=request.form.get('description'),
@@ -58,6 +96,7 @@ def publish():
             floor=request.form.get('floor', type=int),
             total_floor=request.form.get('total_floor', type=int),
             landlord_id=current_user.id,
+            cover_img=cover,
             status=0  # 待审核
         )
         db.session.add(house)
