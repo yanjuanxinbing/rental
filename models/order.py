@@ -14,7 +14,7 @@ class Order(db.Model):
     status = db.Column(db.Integer, default=0)
     # 0=待确认 1=已确认(看房) 2=租约生效 3=已取消 4=已完成
     message = db.Column(db.Text)                         # 租客留言
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def status_text(self):
         return {

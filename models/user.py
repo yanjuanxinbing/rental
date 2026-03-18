@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     avatar = db.Column(db.String(256), default='default.jpg')
     role = db.Column(db.Integer, default=0)  # 0=租客 1=房东 2=管理员
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     houses = db.relationship('House', backref='landlord', lazy='dynamic')
     orders = db.relationship('Order', backref='tenant', lazy='dynamic')

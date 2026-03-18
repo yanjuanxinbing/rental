@@ -23,8 +23,8 @@ class House(db.Model):
     status = db.Column(db.Integer, default=0)            # 0=审核中 1=上架 2=已租出 3=下架
     tags = db.Column(db.String(256))                     # 逗号分隔，如"近地铁,电梯房"
     landlord_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     orders = db.relationship('Order', backref='house', lazy='dynamic')
 
