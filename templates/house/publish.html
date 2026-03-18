@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}发布房源{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <h4 class="fw-bold mb-4">发布新房源</h4>
+    <div class="card p-4">
+      <form method="post" enctype="multipart/form-data">
+
+        <h6 class="fw-bold text-primary mb-3">基本信息</h6>
+        <div class="mb-3">
+          <label class="form-label">标题 <span class="text-danger">*</span></label>
+          <input type="text" name="title" class="form-control" placeholder="例：朝阳区三里屯精装两居室" required>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">城市 <span class="text-danger">*</span></label>
+            <select name="city" class="form-select" required>
+              <option value="">请选择</option>
+              {% for c in ['北京','上海','广州','深圳','杭州','成都','武汉','南京','西安','重庆'] %}
+              <option value="{{ c }}">{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">区域</label>
+            <input type="text" name="district" class="form-control" placeholder="例：朝阳区">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">详细地址</label>
+          <input type="text" name="address" class="form-control" placeholder="例：三里屯路19号">
+        </div>
+
+        <hr class="my-4">
+        <h6 class="fw-bold text-primary mb-3">房屋信息</h6>
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-3">
+            <label class="form-label">室</label>
+            <input type="number" name="rooms" class="form-control" value="2" min="1" max="10">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">厅</label>
+            <input type="number" name="halls" class="form-control" value="1" min="0" max="5">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">卫</label>
+            <input type="number" name="bathrooms" class="form-control" value="1" min="1" max="5">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">面积（㎡）</label>
+            <input type="number" name="area" class="form-control" placeholder="60" min="1">
+          </div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label">所在楼层</label>
+            <input type="number" name="floor" class="form-control" placeholder="5">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">总楼层</label>
+            <input type="number" name="total_floor" class="form-control" placeholder="18">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">租赁类型</label>
+            <select name="house_type" class="form-select">
+              <option value="整租">整租</option>
+              <option value="合租">合租</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <h6 class="fw-bold text-primary mb-3">租金与描述</h6>
+        <div class="mb-3">
+          <label class="form-label">月租金（元） <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text">¥</span>
+            <input type="number" name="price" class="form-control" placeholder="3500" min="1" required>
+            <span class="input-group-text">/月</span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">标签（逗号分隔）</label>
+          <input type="text" name="tags" class="form-control" placeholder="例：近地铁,电梯房,拎包入住,有停车位">
+          <div class="form-text">用英文逗号分隔，最多显示前3个</div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">房源描述</label>
+          <textarea name="description" class="form-control" rows="5" placeholder="详细描述房屋情况、周边配套、交通等..."></textarea>
+        </div>
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-primary px-5">提交审核</button>
+          <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">取消</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

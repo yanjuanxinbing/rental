@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}注册{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card p-4">
+      <h4 class="fw-bold mb-4 text-center">创建账号</h4>
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">用户名</label>
+          <input type="text" name="username" class="form-control" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">邮箱</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">密码</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">我的身份</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="role" value="0" id="r0" checked>
+              <label class="form-check-label" for="r0"><i class="bi bi-person me-1"></i>租客</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="role" value="1" id="r1">
+              <label class="form-check-label" for="r1"><i class="bi bi-house me-1"></i>房东</label>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">注册</button>
+      </form>
+      <p class="text-center mt-3 mb-0 text-muted">
+        已有账号？<a href="{{ url_for('auth.login') }}">去登录</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

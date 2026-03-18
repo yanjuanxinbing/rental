@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}管理后台{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4"><i class="bi bi-gear me-2"></i>管理后台</h4>
+
+<!-- 统计卡片 -->
+<div class="row g-3 mb-4">
+  {% for label, icon, color, val in [
+    ('注册用户','people','primary', stats.total_users),
+    ('全部房源','house','success', stats.total_houses),
+    ('待审核','hourglass-split','warning', stats.pending_houses),
+    ('全部订单','calendar-check','info', stats.total_orders)
+  ] %}
+  <div class="col-6 col-md-3">
+    <div class="card p-3 text-center">
+      <i class="bi bi-{{ icon }} fs-2 text-{{ color }} mb-1"></i>
+      <div class="fw-bold fs-4">{{ val }}</div>
+      <div class="text-muted small">{{ label }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- 待审核房源 -->
+<div class="card p-4">
+  <h6 class="fw-bold mb-3">
+    <i class="bi bi-hourglass-split me-2 text-warning"></i>
+    待审核房源
+    {% if pending %}<span class="badge bg-warning text-dark ms-1">{{ pending|length }}</span>{% endif %}
+  </h6>
+
+  {% if pending %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>标题</th>
+          <th>房东</th>
+          <th>城市</th>
+          <th>月租</th>
+          <th>提交时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for house in pending %}
+        <tr>
+          <td class="text-muted small">#{{ house.id }}</td>
+          <td>
+            <a href="{{ url_for('house.detail', house_id=house.id) }}" class="text-decoration-none fw-medium">
+              {{ house.title }}
+            </a>
+          </td>
+          <td>{{ house.landlord.username }}</td>
+          <td>{{ house.city }}</td>
+          <td class="text-danger fw-bold">¥{{ house.price|int }}</td>
+          <td class="text-muted small">{{ house.created_at.strftime('%Y-%m-%d') }}</td>
+          <td>
+            <div class="d-flex gap-2">
+              <form action="{{ url_for('admin.approve_house', house_id=house.id) }}" method="post">
+                <button class="btn btn-success btn-sm">通过</button>
+              </form>
+              <form action="{{ url_for('admin.reject_house', house_id=house.id) }}" method="post">
+                <button class="btn btn-outline-danger btn-sm">拒绝</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-4">
+    <i class="bi bi-check-circle text-success fs-2"></i>
+    <p class="mt-2 mb-0">暂无待审核房源，一切正常</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}首页{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="p-5 mb-4 rounded-4 text-white" style="background: linear-gradient(135deg, #2563eb, #7c3aed);">
+  <div class="row align-items-center">
+    <div class="col-lg-7">
+      <h1 class="display-5 fw-bold">找到你理想的家</h1>
+      <p class="fs-5 mb-4 opacity-75">海量优质房源，安心租房从这里开始</p>
+      <form action="{{ url_for('house.list_houses') }}" method="get" class="d-flex gap-2">
+        <input type="text" name="city" class="form-control form-control-lg" placeholder="城市 / 区域 / 关键词">
+        <button class="btn btn-light btn-lg px-4 fw-bold text-primary">搜索</button>
+      </form>
+    </div>
+    <div class="col-lg-5 text-center d-none d-lg-block">
+      <i class="bi bi-buildings" style="font-size: 8rem; opacity: .3;"></i>
+    </div>
+  </div>
+</div>
+
+<!-- 快捷筛选 -->
+<div class="row g-3 mb-4">
+  {% for city in ['北京','上海','广州','深圳','杭州','成都'] %}
+  <div class="col-6 col-md-2">
+    <a href="{{ url_for('house.list_houses', city=city) }}" class="card text-center p-3 text-decoration-none text-dark h-100">
+      <i class="bi bi-geo-alt text-primary fs-4"></i>
+      <div class="mt-1 fw-medium">{{ city }}</div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- 最新房源 -->
+<h4 class="fw-bold mb-3"><i class="bi bi-fire text-danger me-2"></i>最新房源</h4>
+{% if houses %}
+<div class="row g-3">
+  {% for house in houses %}
+  <div class="col-12 col-md-6 col-lg-3">
+    <a href="{{ url_for('house.detail', house_id=house.id) }}" class="card house-card text-decoration-none text-dark h-100">
+      <img src="{{ url_for('static', filename='img/uploads/' + house.cover_img) }}"
+           onerror="this.src='https://placehold.co/400x180?text=暂无图片'"
+           alt="{{ house.title }}">
+      <div class="card-body">
+        <h6 class="card-title mb-1 text-truncate">{{ house.title }}</h6>
+        <p class="text-muted small mb-2">
+          <i class="bi bi-geo-alt me-1"></i>{{ house.district }} · {{ house.rooms }}室{{ house.halls }}厅 · {{ house.area }}㎡
+        </p>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="price">¥{{ house.price|int }}<small class="text-muted fw-normal">/月</small></span>
+          <span class="badge bg-light text-secondary">{{ house.house_type or '整租' }}</span>
+        </div>
+        {% if house.get_tags() %}
+        <div class="mt-2">
+          {% for tag in house.get_tags()[:3] %}
+          <span class="tag-badge me-1">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-house-x fs-1"></i>
+  <p class="mt-2">暂无房源，<a href="{{ url_for('house.publish') }}">去发布</a></p>
+</div>
+{% endif %}
+
+<div class="text-center mt-4">
+  <a href="{{ url_for('house.list_houses') }}" class="btn btn-outline-primary px-5">查看全部房源</a>
+</div>
+{% endblock %}

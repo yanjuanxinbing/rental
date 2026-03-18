@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}找房源{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <!-- 侧边筛选 -->
+  <div class="col-lg-3">
+    <div class="card p-3">
+      <h6 class="fw-bold mb-3">筛选条件</h6>
+      <form method="get">
+        <div class="mb-3">
+          <label class="form-label small text-muted">城市</label>
+          <select name="city" class="form-select form-select-sm">
+            <option value="">全部城市</option>
+            {% for c in ['北京','上海','广州','深圳','杭州','成都'] %}
+            <option value="{{ c }}" {% if request.args.get('city')==c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">租赁类型</label>
+          <select name="house_type" class="form-select form-select-sm">
+            <option value="">全部</option>
+            <option value="整租" {% if request.args.get('house_type')=='整租' %}selected{% endif %}>整租</option>
+            <option value="合租" {% if request.args.get('house_type')=='合租' %}selected{% endif %}>合租</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small text-muted">月租范围（元）</label>
+          <div class="d-flex gap-2">
+            <input type="number" name="min_price" class="form-control form-control-sm" placeholder="最低" value="{{ request.args.get('min_price','') }}">
+            <input type="number" name="max_price" class="form-control form-control-sm" placeholder="最高" value="{{ request.args.get('max_price','') }}">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm w-100">搜索</button>
+        <a href="{{ url_for('house.list_houses') }}" class="btn btn-outline-secondary btn-sm w-100 mt-2">重置</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- 房源列表 -->
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="text-muted">共 <strong>{{ pagination.total }}</strong> 套房源</span>
+    </div>
+    {% if houses %}
+    <div class="row g-3">
+      {% for house in houses %}
+      <div class="col-12 col-md-6 col-xl-4">
+        <a href="{{ url_for('house.detail', house_id=house.id) }}" class="card house-card text-decoration-none text-dark h-100">
+          <img src="{{ url_for('static', filename='img/uploads/' + house.cover_img) }}"
+               onerror="this.src='https://placehold.co/400x180?text=暂无图片'"
+               alt="{{ house.title }}">
+          <div class="card-body">
+            <h6 class="text-truncate mb-1">{{ house.title }}</h6>
+            <p class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>{{ house.city }} {{ house.district }}</p>
+            <p class="small text-muted mb-2">{{ house.rooms }}室{{ house.halls }}厅{{ house.bathrooms }}卫 · {{ house.area }}㎡</p>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="price">¥{{ house.price|int }}<small class="text-muted fw-normal">/月</small></span>
+              <span class="badge bg-light text-secondary">{{ house.house_type or '整租' }}</span>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}">上一页</a></li>
+        {% endif %}
+        {% for p in pagination.iter_pages() %}
+          {% if p %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}">下一页</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-search fs-1"></i>
+      <p class="mt-2">没有找到符合条件的房源</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

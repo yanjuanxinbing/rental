@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}我的预约{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4">我的预约</h4>
+
+{% if orders %}
+<div class="row g-3">
+  {% for order in orders %}
+  <div class="col-12">
+    <div class="card p-3">
+      <div class="row align-items-center g-3">
+        <div class="col-auto">
+          <img src="{{ url_for('static', filename='img/uploads/' + order.house.cover_img) }}"
+               onerror="this.src='https://placehold.co/100x80?text=图片'"
+               style="width:100px;height:80px;object-fit:cover;border-radius:8px;">
+        </div>
+        <div class="col">
+          <a href="{{ url_for('house.detail', house_id=order.house.id) }}" class="fw-bold text-decoration-none text-dark">
+            {{ order.house.title }}
+          </a>
+          <p class="text-muted small mb-1">
+            <i class="bi bi-geo-alt me-1"></i>{{ order.house.city }} {{ order.house.district }}
+          </p>
+          <p class="text-muted small mb-0">
+            <i class="bi bi-calendar me-1"></i>预约时间：{{ order.visit_date.strftime('%Y-%m-%d %H:%M') if order.visit_date else '待定' }}
+          </p>
+        </div>
+        <div class="col-auto text-end">
+          <div class="mb-2">
+            {% set status_color = {'0':'warning','1':'success','2':'primary','3':'secondary','4':'dark'} %}
+            <span class="badge bg-{{ status_color.get(order.status|string, 'secondary') }}">
+              {{ order.status_text() }}
+            </span>
+          </div>
+          <div class="text-danger fw-bold">¥{{ order.house.price|int }}/月</div>
+          {% if order.status == 0 %}
+          <form action="{{ url_for('user.cancel_order', order_id=order.id) }}" method="post" class="mt-2">
+            <button type="submit" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('确认取消预约？')">取消预约</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% if order.message %}
+      <div class="mt-2 p-2 bg-light rounded small text-muted">
+        <i class="bi bi-chat-text me-1"></i>{{ order.message }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-calendar-x fs-1"></i>
+  <p class="mt-2">暂无预约记录</p>
+  <a href="{{ url_for('house.list_houses') }}" class="btn btn-primary">去找房源</a>
+</div>
+{% endif %}
+{% endblock %}

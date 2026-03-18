@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}{{ house.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('house.list_houses') }}">找房源</a></li>
+    <li class="breadcrumb-item active">{{ house.title }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <!-- 左栏：图片 + 详情 -->
+  <div class="col-lg-8">
+    <div class="card overflow-hidden mb-4">
+      <img src="{{ url_for('static', filename='img/uploads/' + house.cover_img) }}"
+           onerror="this.src='https://placehold.co/800x400?text=暂无图片'"
+           alt="{{ house.title }}" style="width:100%;height:380px;object-fit:cover;">
+    </div>
+
+    <div class="card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold mb-0">{{ house.title }}</h4>
+        <span class="badge bg-success">{{ house.status_text() }}</span>
+      </div>
+      <p class="text-muted mb-3"><i class="bi bi-geo-alt me-1"></i>{{ house.city }} {{ house.district }} · {{ house.address }}</p>
+
+      <!-- 核心参数 -->
+      <div class="row g-3 mb-4 text-center">
+        <div class="col-3">
+          <div class="fw-bold fs-5">{{ house.rooms }}</div>
+          <div class="text-muted small">室</div>
+        </div>
+        <div class="col-3">
+          <div class="fw-bold fs-5">{{ house.halls }}</div>
+          <div class="text-muted small">厅</div>
+        </div>
+        <div class="col-3">
+          <div class="fw-bold fs-5">{{ house.bathrooms }}</div>
+          <div class="text-muted small">卫</div>
+        </div>
+        <div class="col-3">
+          <div class="fw-bold fs-5">{{ house.area }}</div>
+          <div class="text-muted small">㎡</div>
+        </div>
+      </div>
+
+      <div class="row g-2 mb-4 text-muted small">
+        <div class="col-6"><i class="bi bi-layers me-1"></i>楼层：{{ house.floor }}/{{ house.total_floor }} 层</div>
+        <div class="col-6"><i class="bi bi-house me-1"></i>类型：{{ house.house_type or '整租' }}</div>
+      </div>
+
+      {% if house.get_tags() %}
+      <div class="mb-4">
+        {% for tag in house.get_tags() %}
+        <span class="tag-badge me-1 mb-1">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <hr>
+      <h6 class="fw-bold mb-2">房源描述</h6>
+      <p class="text-muted" style="white-space: pre-line;">{{ house.description or '暂无描述' }}</p>
+    </div>
+  </div>
+
+  <!-- 右栏：价格 + 预约 -->
+  <div class="col-lg-4">
+    <div class="card p-4 mb-3 sticky-top" style="top: 80px;">
+      <div class="mb-3">
+        <span class="text-danger fw-bold" style="font-size:2rem;">¥{{ house.price|int }}</span>
+        <span class="text-muted">/月</span>
+      </div>
+
+      <div class="d-flex align-items-center mb-4">
+        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+             style="width:40px;height:40px;font-size:.9rem;">
+          {{ house.landlord.username[0] }}
+        </div>
+        <div>
+          <div class="fw-medium">{{ house.landlord.username }}</div>
+          <div class="text-muted small">房东</div>
+        </div>
+      </div>
+
+      {% if current_user.is_authenticated and house.status == 1 %}
+        {% if current_user.id != house.landlord_id %}
+        <button class="btn btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#bookModal">
+          <i class="bi bi-calendar-plus me-1"></i>预约看房
+        </button>
+        {% else %}
+        <div class="alert alert-info small mb-0">这是你发布的房源</div>
+        {% endif %}
+      {% elif not current_user.is_authenticated %}
+      <a href="{{ url_for('auth.login') }}" class="btn btn-primary w-100">登录后预约</a>
+      {% else %}
+      <button class="btn btn-secondary w-100" disabled>{{ house.status_text() }}</button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- 预约弹窗 -->
+{% if current_user.is_authenticated and house.status == 1 %}
+<div class="modal fade" id="bookModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">预约看房</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('house.book', house_id=house.id) }}" method="post">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">期望看房时间</label>
+            <input type="datetime-local" name="visit_date" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">留言给房东（选填）</label>
+            <textarea name="message" class="form-control" rows="3" placeholder="可以介绍一下自己，或说明看房需求..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">确认预约</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
