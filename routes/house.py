@@ -73,6 +73,26 @@ def publish():
         flash('只有房东才能发布房源', 'warning')
         return redirect(url_for('index'))
     if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        city = request.form.get('city', '').strip()
+        price_str = request.form.get('price', '').strip()
+
+        if not title or not city or not price_str:
+            flash('标题、城市和月租金为必填项', 'danger')
+            return render_template('house/publish.html', form=request.form)
+
+        def to_float(val, default=0.0):
+            try:
+                return float(val) if val and val.strip() else default
+            except (ValueError, TypeError):
+                return default
+
+        def to_int(val, default=1):
+            try:
+                return int(val) if val and val.strip() else default
+            except (ValueError, TypeError):
+                return default
+
         cover = 'default_house.jpg'
         file = request.files.get('cover_img')
         if file and file.filename:
@@ -82,23 +102,23 @@ def publish():
                 flash('图片处理失败，已使用默认封面', 'warning')
 
         house = House(
-            title=request.form.get('title'),
+            title=title,
             description=request.form.get('description'),
-            price=float(request.form.get('price', 0)),
-            area=float(request.form.get('area', 0)),
-            rooms=int(request.form.get('rooms', 1)),
-            halls=int(request.form.get('halls', 1)),
-            bathrooms=int(request.form.get('bathrooms', 1)),
+            price=to_float(price_str),
+            area=to_float(request.form.get('area')),
+            rooms=to_int(request.form.get('rooms')),
+            halls=to_int(request.form.get('halls')),
+            bathrooms=to_int(request.form.get('bathrooms')),
             address=request.form.get('address'),
-            city=request.form.get('city'),
+            city=city,
             district=request.form.get('district'),
             house_type=request.form.get('house_type'),
             tags=request.form.get('tags'),
-            floor=request.form.get('floor', type=int),
-            total_floor=request.form.get('total_floor', type=int),
+            floor=to_int(request.form.get('floor'), default=None),
+            total_floor=to_int(request.form.get('total_floor'), default=None),
             landlord_id=current_user.id,
             cover_img=cover,
-            status=0  # 待审核
+            status=0
         )
         db.session.add(house)
         db.session.commit()
