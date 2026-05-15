@@ -41,20 +41,30 @@ def process_cover(file) -> str:
 @house_bp.route('/list')
 def list_houses():
     page = request.args.get('page', 1, type=int)
+    keyword = request.args.get('keyword', '').strip()
     city = request.args.get('city', '')
-    district = request.args.get('district', '')
     min_price = request.args.get('min_price', 0, type=float)
     max_price = request.args.get('max_price', 99999, type=float)
     house_type = request.args.get('house_type', '')
 
     query = House.query.filter_by(status=1)
+    if keyword:
+        like = f'%{keyword}%'
+        query = query.filter(
+            House.title.like(like) |
+            House.city.like(like) |
+            House.district.like(like) |
+            House.address.like(like) |
+            House.tags.like(like)
+        )
     if city:
         query = query.filter_by(city=city)
-    if district:
-        query = query.filter_by(district=district)
     if house_type:
         query = query.filter_by(house_type=house_type)
-    query = query.filter(House.price >= min_price, House.price <= max_price)
+    if min_price:
+        query = query.filter(House.price >= min_price)
+    if max_price < 99999:
+        query = query.filter(House.price <= max_price)
 
     pagination = query.order_by(House.created_at.desc()).paginate(page=page, per_page=12)
     return render_template('house/list.html', pagination=pagination, houses=pagination.items)
@@ -125,6 +135,32 @@ def publish():
         flash('房源已提交，等待审核', 'success')
         return redirect(url_for('user.my_houses'))
     return render_template('house/publish.html')
+
+
+@house_bp.route('/<int:house_id>/delist', methods=['POST'])
+@login_required
+def delist(house_id):
+    house = House.query.get_or_404(house_id)
+    if house.landlord_id != current_user.id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('user.my_houses'))
+    house.status = 3
+    db.session.commit()
+    flash(f'《{house.title}》已下架', 'info')
+    return redirect(url_for('user.my_houses'))
+
+
+@house_bp.route('/<int:house_id>/relist', methods=['POST'])
+@login_required
+def relist(house_id):
+    house = House.query.get_or_404(house_id)
+    if house.landlord_id != current_user.id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('user.my_houses'))
+    house.status = 0
+    db.session.commit()
+    flash(f'《{house.title}》已重新提交审核', 'success')
+    return redirect(url_for('user.my_houses'))
 
 
 @house_bp.route('/<int:house_id>/book', methods=['POST'])

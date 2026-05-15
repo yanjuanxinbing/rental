@@ -21,15 +21,45 @@
   {% endfor %}
 </div>
 
-<!-- 待审核房源 -->
-<div class="card p-4">
-  <h6 class="fw-bold mb-3">
-    <i class="bi bi-hourglass-split me-2 text-warning"></i>
-    待审核房源
-    {% if pending %}<span class="badge bg-warning text-dark ms-1">{{ pending|length }}</span>{% endif %}
-  </h6>
+<!-- Tab 导航 -->
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if tab=='pending' %}active{% endif %}"
+       href="{{ url_for('admin.dashboard', tab='pending') }}">
+      待审核
+      {% if pending %}<span class="badge bg-warning text-dark ms-1">{{ pending|length }}</span>{% endif %}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab=='listed' %}active{% endif %}"
+       href="{{ url_for('admin.dashboard', tab='listed') }}">
+      已上架
+      <span class="badge bg-success ms-1">{{ listed|length }}</span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab=='all' %}active{% endif %}"
+       href="{{ url_for('admin.dashboard', tab='all') }}">
+      全部房源
+      <span class="badge bg-secondary ms-1">{{ all_houses|length }}</span>
+    </a>
+  </li>
+</ul>
 
-  {% if pending %}
+{% set show_houses = pending if tab=='pending' else (listed if tab=='listed' else all_houses) %}
+
+<div class="card p-4">
+  {% if tab == 'pending' and not pending %}
+  <div class="text-center text-muted py-4">
+    <i class="bi bi-check-circle text-success fs-2"></i>
+    <p class="mt-2 mb-0">暂无待审核房源，一切正常</p>
+  </div>
+  {% elif not show_houses %}
+  <div class="text-center text-muted py-4">
+    <i class="bi bi-inbox fs-2"></i>
+    <p class="mt-2 mb-0">暂无数据</p>
+  </div>
+  {% else %}
   <div class="table-responsive">
     <table class="table table-hover align-middle">
       <thead class="table-light">
@@ -39,12 +69,13 @@
           <th>房东</th>
           <th>城市</th>
           <th>月租</th>
+          <th>状态</th>
           <th>提交时间</th>
           <th>操作</th>
         </tr>
       </thead>
       <tbody>
-        {% for house in pending %}
+        {% for house in show_houses %}
         <tr>
           <td class="text-muted small">#{{ house.id }}</td>
           <td>
@@ -55,26 +86,39 @@
           <td>{{ house.landlord.username }}</td>
           <td>{{ house.city }}</td>
           <td class="text-danger fw-bold">¥{{ house.price|int }}</td>
+          <td>
+            <span class="badge
+              {% if house.status==0 %}bg-warning text-dark
+              {% elif house.status==1 %}bg-success
+              {% elif house.status==2 %}bg-primary
+              {% else %}bg-secondary{% endif %}">
+              {{ house.status_text() }}
+            </span>
+          </td>
           <td class="text-muted small">{{ house.created_at.strftime('%Y-%m-%d') }}</td>
           <td>
             <div class="d-flex gap-2">
+              {% if house.status == 0 %}
               <form action="{{ url_for('admin.approve_house', house_id=house.id) }}" method="post">
                 <button class="btn btn-success btn-sm">通过</button>
               </form>
               <form action="{{ url_for('admin.reject_house', house_id=house.id) }}" method="post">
                 <button class="btn btn-outline-danger btn-sm">拒绝</button>
               </form>
+              {% elif house.status == 1 %}
+              <form action="{{ url_for('admin.force_delist', house_id=house.id) }}" method="post">
+                <button class="btn btn-outline-secondary btn-sm"
+                        onclick="return confirm('强制下架该房源？')">下架</button>
+              </form>
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}
             </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-  </div>
-  {% else %}
-  <div class="text-center text-muted py-4">
-    <i class="bi bi-check-circle text-success fs-2"></i>
-    <p class="mt-2 mb-0">暂无待审核房源，一切正常</p>
   </div>
   {% endif %}
 </div>
