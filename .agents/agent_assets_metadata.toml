@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "bbvl4ydjCuxxohIMnP3Av"
+uri = "file://智能房屋租赁系统_汇报PPT.pptx"
+type = "slides"
+title = "智能房屋租赁系统 — 课程汇报 PPT"
