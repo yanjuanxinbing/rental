@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from PIL import Image
@@ -114,10 +115,18 @@ def book(house_id):
         flash('该房源当前不可预约', 'warning')
         return redirect(url_for('house.detail', house_id=house_id))
 
+    visit_date_str = request.form.get('visit_date', '')
+    visit_date = None
+    if visit_date_str:
+        try:
+            visit_date = datetime.strptime(visit_date_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            pass
+
     order = Order(
         house_id=house_id,
         tenant_id=current_user.id,
-        visit_date=request.form.get('visit_date'),
+        visit_date=visit_date,
         message=request.form.get('message')
     )
     db.session.add(order)
