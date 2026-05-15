@@ -9,7 +9,7 @@
       <h1 class="display-5 fw-bold">找到你理想的家</h1>
       <p class="fs-5 mb-4 opacity-75">海量优质房源，安心租房从这里开始</p>
       <form action="{{ url_for('house.list_houses') }}" method="get" class="d-flex gap-2">
-        <input type="text" name="city" class="form-control form-control-lg" placeholder="城市 / 区域 / 关键词">
+        <input type="text" name="keyword" class="form-control form-control-lg" placeholder="城市 / 区域 / 标题关键词">
         <button class="btn btn-light btn-lg px-4 fw-bold text-primary">搜索</button>
       </form>
     </div>
