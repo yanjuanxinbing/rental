@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from extensions import db
 from models.house import House
@@ -23,14 +23,19 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
+    tab = request.args.get('tab', 'pending')
     stats = {
         'total_users': User.query.count(),
         'total_houses': House.query.count(),
         'pending_houses': House.query.filter_by(status=0).count(),
         'total_orders': Order.query.count(),
     }
-    pending = House.query.filter_by(status=0).all()
-    return render_template('admin/dashboard.html', stats=stats, pending=pending)
+    pending = House.query.filter_by(status=0).order_by(House.created_at.desc()).all()
+    listed = House.query.filter_by(status=1).order_by(House.created_at.desc()).all()
+    all_houses = House.query.order_by(House.created_at.desc()).all()
+    return render_template('admin/dashboard.html',
+                           stats=stats, pending=pending,
+                           listed=listed, all_houses=all_houses, tab=tab)
 
 
 @admin_bp.route('/house/<int:house_id>/approve', methods=['POST'])
@@ -53,3 +58,14 @@ def reject_house(house_id):
     db.session.commit()
     flash(f'《{house.title}》已拒绝', 'warning')
     return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/house/<int:house_id>/force-delist', methods=['POST'])
+@login_required
+@admin_required
+def force_delist(house_id):
+    house = House.query.get_or_404(house_id)
+    house.status = 3
+    db.session.commit()
+    flash(f'《{house.title}》已被强制下架', 'warning')
+    return redirect(url_for('admin.dashboard', tab='listed'))

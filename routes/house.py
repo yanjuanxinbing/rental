@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from PIL import Image
@@ -40,20 +41,30 @@ def process_cover(file) -> str:
 @house_bp.route('/list')
 def list_houses():
     page = request.args.get('page', 1, type=int)
+    keyword = request.args.get('keyword', '').strip()
     city = request.args.get('city', '')
-    district = request.args.get('district', '')
     min_price = request.args.get('min_price', 0, type=float)
     max_price = request.args.get('max_price', 99999, type=float)
     house_type = request.args.get('house_type', '')
 
     query = House.query.filter_by(status=1)
+    if keyword:
+        like = f'%{keyword}%'
+        query = query.filter(
+            House.title.like(like) |
+            House.city.like(like) |
+            House.district.like(like) |
+            House.address.like(like) |
+            House.tags.like(like)
+        )
     if city:
         query = query.filter_by(city=city)
-    if district:
-        query = query.filter_by(district=district)
     if house_type:
         query = query.filter_by(house_type=house_type)
-    query = query.filter(House.price >= min_price, House.price <= max_price)
+    if min_price:
+        query = query.filter(House.price >= min_price)
+    if max_price < 99999:
+        query = query.filter(House.price <= max_price)
 
     pagination = query.order_by(House.created_at.desc()).paginate(page=page, per_page=12)
     return render_template('house/list.html', pagination=pagination, houses=pagination.items)
@@ -72,6 +83,26 @@ def publish():
         flash('只有房东才能发布房源', 'warning')
         return redirect(url_for('index'))
     if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        city = request.form.get('city', '').strip()
+        price_str = request.form.get('price', '').strip()
+
+        if not title or not city or not price_str:
+            flash('标题、城市和月租金为必填项', 'danger')
+            return render_template('house/publish.html', form=request.form)
+
+        def to_float(val, default=0.0):
+            try:
+                return float(val) if val and val.strip() else default
+            except (ValueError, TypeError):
+                return default
+
+        def to_int(val, default=1):
+            try:
+                return int(val) if val and val.strip() else default
+            except (ValueError, TypeError):
+                return default
+
         cover = 'default_house.jpg'
         file = request.files.get('cover_img')
         if file and file.filename:
@@ -81,29 +112,55 @@ def publish():
                 flash('图片处理失败，已使用默认封面', 'warning')
 
         house = House(
-            title=request.form.get('title'),
+            title=title,
             description=request.form.get('description'),
-            price=float(request.form.get('price', 0)),
-            area=float(request.form.get('area', 0)),
-            rooms=int(request.form.get('rooms', 1)),
-            halls=int(request.form.get('halls', 1)),
-            bathrooms=int(request.form.get('bathrooms', 1)),
+            price=to_float(price_str),
+            area=to_float(request.form.get('area')),
+            rooms=to_int(request.form.get('rooms')),
+            halls=to_int(request.form.get('halls')),
+            bathrooms=to_int(request.form.get('bathrooms')),
             address=request.form.get('address'),
-            city=request.form.get('city'),
+            city=city,
             district=request.form.get('district'),
             house_type=request.form.get('house_type'),
             tags=request.form.get('tags'),
-            floor=request.form.get('floor', type=int),
-            total_floor=request.form.get('total_floor', type=int),
+            floor=to_int(request.form.get('floor'), default=None),
+            total_floor=to_int(request.form.get('total_floor'), default=None),
             landlord_id=current_user.id,
             cover_img=cover,
-            status=0  # 待审核
+            status=0
         )
         db.session.add(house)
         db.session.commit()
         flash('房源已提交，等待审核', 'success')
         return redirect(url_for('user.my_houses'))
     return render_template('house/publish.html')
+
+
+@house_bp.route('/<int:house_id>/delist', methods=['POST'])
+@login_required
+def delist(house_id):
+    house = House.query.get_or_404(house_id)
+    if house.landlord_id != current_user.id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('user.my_houses'))
+    house.status = 3
+    db.session.commit()
+    flash(f'《{house.title}》已下架', 'info')
+    return redirect(url_for('user.my_houses'))
+
+
+@house_bp.route('/<int:house_id>/relist', methods=['POST'])
+@login_required
+def relist(house_id):
+    house = House.query.get_or_404(house_id)
+    if house.landlord_id != current_user.id:
+        flash('无权操作', 'danger')
+        return redirect(url_for('user.my_houses'))
+    house.status = 0
+    db.session.commit()
+    flash(f'《{house.title}》已重新提交审核', 'success')
+    return redirect(url_for('user.my_houses'))
 
 
 @house_bp.route('/<int:house_id>/book', methods=['POST'])
@@ -114,10 +171,18 @@ def book(house_id):
         flash('该房源当前不可预约', 'warning')
         return redirect(url_for('house.detail', house_id=house_id))
 
+    visit_date_str = request.form.get('visit_date', '')
+    visit_date = None
+    if visit_date_str:
+        try:
+            visit_date = datetime.strptime(visit_date_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            pass
+
     order = Order(
         house_id=house_id,
         tenant_id=current_user.id,
-        visit_date=request.form.get('visit_date'),
+        visit_date=visit_date,
         message=request.form.get('message')
     )
     db.session.add(order)

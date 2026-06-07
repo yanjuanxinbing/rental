@@ -14,7 +14,7 @@ def register():
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
-        role = int(request.form.get('role', 0))
+        role = min(int(request.form.get('role', 0)), 1)
 
         if User.query.filter_by(username=username).first():
             flash('用户名已存在', 'danger')

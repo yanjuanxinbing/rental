@@ -54,4 +54,6 @@ def cancel_order(order_id):
     order.status = 3
     db.session.commit()
     flash('已取消', 'info')
+    if order.house.landlord_id == current_user.id:
+        return redirect(url_for('user.my_houses'))
     return redirect(url_for('user.orders'))
